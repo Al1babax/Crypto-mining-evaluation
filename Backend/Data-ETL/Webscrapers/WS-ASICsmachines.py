@@ -11,10 +11,20 @@ from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 # Main function for webscraping machines
 
+# Selenium initliazing
+def webscraper_id():
+    options = webdriver.ChromeOptions()
+    options.headless = True
+    options.add_argument("window-size=1920,1080")
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options) 
+    return driver
 
 url = 'https://www.asicminervalue.com/'
 
 time1 = dt.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
+
 
 
 def main():
@@ -23,19 +33,24 @@ def main():
         dict_of_machines = {}
         list_of_machines=[]
         counter = 1
+        headers = {
+                        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
+                    }
         link_of_machines = get_all_links_of_website_pages(url)
-        for machine in link_of_machines[:number_of_profitable_prices]:
+        for machine in link_of_machines[:10]:
+            source_code=requests.get(url+machine[1:],headers=headers,timeout=10)
+            print('ok')
             dict_of_one_machine_spec={}
             dict_of_one_machine_spec = get_specs_from_website_table(
-                url+machine[1:])
+                source_code)
             dict_of_one_machine_spec['coins'] = get_minable_coin_of_machine(
-                url+machine[1:])
+                source_code)
             dict_of_one_machine_spec['available_stores'] = get_market_prices(
-                url+machine[1:])
+                source_code)
             dict_of_one_machine_spec['Algorithm_and_power'] = get_algorithm_of_one_machine(
-                url+machine[1:])
+                source_code)
             dict_of_one_machine_spec['available_mining_pools'] = get_available_mining_pools_of_one_machine(
-                url+machine[1:])
+                source_code)
             list_of_machines.append(dict_of_one_machine_spec)
             counter += 1
         time2=dt.datetime.now()
@@ -48,13 +63,9 @@ def main():
 
 
 # Selenium initliazing
-def webscraper_id():
-    options = webdriver.ChromeOptions()
-    options.headless = True
-    options.add_argument("window-size=1920,1080")
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options) 
+def webcraper_id():
+    DRIVER_PATH=r'C:\Users\user\Desktop\AllFolders\Coding2.0\CryptoMiningProject\packages\chromedriver.exe'
+    driver = webdriver.Chrome(executable_path=DRIVER_PATH)  
     return driver
 
 # getting all machines link from the url page
@@ -70,8 +81,8 @@ def get_all_links_of_website_pages(url):
 
 
 # Scrapping the spec from the website
-def get_specs_from_website_table(url):
-    source_code = requests.get(url)
+def get_specs_from_website_table(sc):
+    source_code = sc
     soup = BeautifulSoup(source_code.text, 'lxml')
     locate_div = soup.find('div', class_='col-sm-8')
     locate_table_from_div = locate_div.find(
@@ -100,8 +111,8 @@ def create_json_file(destination, dict):
 
 
 # get minable coins for one machine
-def get_minable_coin_of_machine(url):
-    source_code = requests.get(url)
+def get_minable_coin_of_machine(sc):
+    source_code = sc
     soup = BeautifulSoup(source_code.text, 'lxml')
     locate_div = soup.find_all('img', class_='img-responsive')
     list_of_minable_coins = []
@@ -124,40 +135,30 @@ def remove_b_tags(string):
 # get market price and stores for one machine
 
 
-def get_market_prices(url):
-    driver = webscraper_id()
-    driver.get(url)
 
-    nb_of_stores = driver.find_elements(
-        By.XPATH, '/html/body/div[2]/div[7]/div/div/div/div[2]/div/table/tbody/tr')
 
+def get_market_prices(sc):
+    source_code1=sc
     list_of_markets = []
+    soup=BeautifulSoup(source_code1.text,'lxml')
+    find_table=soup.find('table',{'id':'datatable_opportunities'})
+    find_body=find_table.find('tbody')
+    find_row=find_body.find_all('tr')
+    l=[]
+    for row in find_row:
+        dict_of_stores={}
+        price_loc=row.find('td',{'class':'text-center','style':'vertical-align: middle;  width:180px; font-size:1.2em;'})
+        dict_of_stores['store_name']=row.find('b').text
+        dict_of_stores['url']=row.find('a').get('href')
+        dict_of_stores['price']=price_loc.find('b').text
+        dict_of_stores['country']=row.find('span',{'style':'float:right;text-align:center;'}).find('img').get('title')
+        list_of_markets.append(dict_of_stores)
 
-    for counter in range(0, len(nb_of_stores)):
-        try:
-            name = driver.find_element(
-                By.XPATH, '/html/body/div[2]/div[7]/div/div/div/div[2]/div/table/tbody/tr['+str(counter+1)+']/td[2]/b/a')
-            sleep(1)
-            country = driver.find_element(By.XPATH, '/html/body/div[2]/div[7]/div/div/div/div[2]/div/table/tbody/tr['+str(
-                counter+1)+']/td[2]/span/img').get_attribute("data-original-title")
-            sleep(1)
-            price = driver.find_element(
-                By.XPATH, '/html/body/div[2]/div[7]/div/div/div/div[2]/div/table/tbody/tr['+str(counter+1)+']/td[3]/b')
-            sleep(1)
-            website_url = driver.find_element(
-                By.XPATH, '/html/body/div[2]/div[7]/div/div/div/div[2]/div/table/tbody/tr['+str(counter+1)+']/td[2]/b/a')
-            sleep(1)
-            dict_of_stores = {'name': name.text, 'country': country,
-                            'price': price.text, 'website_link': website_url.get_attribute('href')}
-            list_of_markets.append(dict_of_stores)
-        except:
-            pass
-    driver.quit()
     return list_of_markets
 
 
-def get_algorithm_of_one_machine(url):
-    source_code = requests.get(url)
+def get_algorithm_of_one_machine(sc):
+    source_code = sc
     scraper = BeautifulSoup(source_code.text, 'lxml')
     locate_table = scraper.find('table', {'class': 'table table-striped'})
     if locate_table is not None:
@@ -172,8 +173,8 @@ def get_algorithm_of_one_machine(url):
         return machine_algos
 
 
-def get_available_mining_pools_of_one_machine(url):
-    source_code = requests.get(url)
+def get_available_mining_pools_of_one_machine(sc):
+    source_code = sc
     scraper = BeautifulSoup(source_code.text, 'lxml')
     locate_table = scraper.find(
         'table', {'class': 'table table-striped table-small'})
