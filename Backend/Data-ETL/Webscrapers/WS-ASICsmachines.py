@@ -19,11 +19,12 @@ time1 = dt.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
 
 def main():
     try:
+        number_of_profitable_prices=get_number_of__profitable_prices(url)
         dict_of_machines = {}
         list_of_machines=[]
         counter = 1
         link_of_machines = get_all_links_of_website_pages(url)
-        for machine in link_of_machines[:2]:
+        for machine in link_of_machines[:number_of_profitable_prices]:
             dict_of_one_machine_spec={}
             dict_of_one_machine_spec = get_specs_from_website_table(
                 url+machine[1:])
@@ -41,7 +42,7 @@ def main():
         print(counter)
         dict_of_machines['time'] = str(time1)
         dict_of_machines['data']=list_of_machines
-        create_json_file('finaq_result.json', dict_of_machines)
+        send_to_db(dict_of_machines)
     except:
         pass
 
@@ -196,8 +197,24 @@ def get_available_mining_pools_of_one_machine(url):
 def send_to_db(dict):
     client=pymongo.MongoClient()
     mydb=client['Crypto-mining']
-    asics=mydb['GPU-PoW']
-    asics.insert_many(dict)
+    asics=mydb['ASICS-PoW']
+    if asics.find_one() != {}:
+        asics.delete_many({})
+        asics.insert_one(dict)
+
+
+def get_number_of__profitable_prices(url):
+    source_code=requests.get(url)
+    soup=BeautifulSoup(source_code.text,'lxml')
+    find_table=soup.find('table',{'id':'datatable_profitability'})
+    find_body=find_table.find('tbody')
+    find_row=find_body.find_all('tr')
+    list_of_prices=[]
+    for row in find_row:
+        list_of_ele=row.text.split(' ')
+        price=list_of_ele[-1].replace('$','')
+        list_of_prices.append(list_of_ele[-1].replace('/day',' '))
+    return len(list_of_prices)
 
 
 # calling the main function
