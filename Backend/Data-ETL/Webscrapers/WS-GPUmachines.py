@@ -1,5 +1,7 @@
+import pymongo
 import requests
 import json
+import datetime as dt
 
 url = "https://api.minerstat.com/v2/hardware"
 
@@ -46,11 +48,23 @@ def create_json_file(destination, dict):
 #main function to create a json file of gpu's
 def main():
     dict_of_gpu={}
+    list_of_gpu=[]
     counter=1
     for gpu in create_list_of_gpus():
-        dict_of_gpu['gpu'+str(counter)]=gpu
+        list_of_gpu.append(gpu)
         counter+=1
-    create_json_file('gpu-final.json',dict_of_gpu)
+    dict_of_gpu['time']=dt.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
+    dict_of_gpu['data']=list_of_gpu
+    send_to_db(dict_of_gpu)
+
+#send data to mongodb database
+def send_to_db(dict):
+    client=pymongo.MongoClient()
+    mydb=client['Crypto-mining']
+    gpu=mydb['GPU-PoW']
+    if gpu.find_one() != {}:
+        gpu.delete_many({})
+        gpu.insert_one(dict)
 
     
 #calling the main function 
