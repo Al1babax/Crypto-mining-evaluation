@@ -28,18 +28,16 @@ time1 = dt.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
 
 
 def main():
-    try:
-        number_of_profitable_prices=get_number_of__profitable_prices(url)
-        dict_of_machines = {}
-        list_of_machines=[]
-        counter = 1
-        headers = {
-                        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
-                    }
-        link_of_machines = get_all_links_of_website_pages(url)
-        for machine in link_of_machines[:10]:
+    dict_of_machines = {}
+    list_of_machines=[]
+    counter = 1
+    headers = {
+                    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
+                }
+    link_of_machines = get_all_links_of_website_pages(url)
+    for machine in link_of_machines:
+        try:
             source_code=requests.get(url+machine[1:],headers=headers,timeout=10)
-            print('ok')
             dict_of_one_machine_spec={}
             dict_of_one_machine_spec = get_specs_from_website_table(
                 source_code)
@@ -53,13 +51,13 @@ def main():
                 source_code)
             list_of_machines.append(dict_of_one_machine_spec)
             counter += 1
-        time2=dt.datetime.now()
-        print(counter)
-        dict_of_machines['time'] = str(time1)
-        dict_of_machines['data']=list_of_machines
-        send_to_db(dict_of_machines)
-    except:
-        pass
+            print(counter)
+        except:
+            pass
+    time2=dt.datetime.now()
+    dict_of_machines['time'] = str(time1)
+    dict_of_machines['data']=list_of_machines
+    send_to_db(dict_of_machines)
 
 
 # Selenium initliazing
@@ -115,12 +113,13 @@ def get_minable_coin_of_machine(sc):
     source_code = sc
     soup = BeautifulSoup(source_code.text, 'lxml')
     locate_div = soup.find_all('img', class_='img-responsive')
-    list_of_minable_coins = []
-    for i in locate_div:
-        coin = i.get('title')
-        if coin is not None:
-            list_of_minable_coins.append(remove_b_tags(coin))
-    return list_of_minable_coins
+    if locate_div is not None:
+        list_of_minable_coins = []
+        for i in locate_div:
+            coin = i.get('title')
+            if coin is not None:
+                list_of_minable_coins.append(remove_b_tags(coin))
+        return list_of_minable_coins
 
 # remove <b> from one coins data
 
@@ -142,19 +141,20 @@ def get_market_prices(sc):
     list_of_markets = []
     soup=BeautifulSoup(source_code1.text,'lxml')
     find_table=soup.find('table',{'id':'datatable_opportunities'})
-    find_body=find_table.find('tbody')
-    find_row=find_body.find_all('tr')
-    l=[]
-    for row in find_row:
-        dict_of_stores={}
-        price_loc=row.find('td',{'class':'text-center','style':'vertical-align: middle;  width:180px; font-size:1.2em;'})
-        dict_of_stores['store_name']=row.find('b').text
-        dict_of_stores['url']=row.find('a').get('href')
-        dict_of_stores['price']=price_loc.find('b').text
-        dict_of_stores['country']=row.find('span',{'style':'float:right;text-align:center;'}).find('img').get('title')
-        list_of_markets.append(dict_of_stores)
+    if find_table is not None:
+        find_body=find_table.find('tbody')
+        find_row=find_body.find_all('tr')
+        l=[]
+        for row in find_row:
+            dict_of_stores={}
+            price_loc=row.find('td',{'class':'text-center','style':'vertical-align: middle;  width:180px; font-size:1.2em;'})
+            dict_of_stores['store_name']=row.find('b').text
+            dict_of_stores['url']=row.find('a').get('href')
+            dict_of_stores['price']=price_loc.find('b').text
+            dict_of_stores['country']=row.find('span',{'style':'float:right;text-align:center;'}).find('img').get('title')
+            list_of_markets.append(dict_of_stores)
 
-    return list_of_markets
+        return list_of_markets
 
 
 def get_algorithm_of_one_machine(sc):
@@ -204,18 +204,6 @@ def send_to_db(dict):
         asics.insert_one(dict)
 
 
-def get_number_of__profitable_prices(url):
-    source_code=requests.get(url)
-    soup=BeautifulSoup(source_code.text,'lxml')
-    find_table=soup.find('table',{'id':'datatable_profitability'})
-    find_body=find_table.find('tbody')
-    find_row=find_body.find_all('tr')
-    list_of_prices=[]
-    for row in find_row:
-        list_of_ele=row.text.split(' ')
-        price=list_of_ele[-1].replace('$','')
-        list_of_prices.append(list_of_ele[-1].replace('/day',' '))
-    return len(list_of_prices)
 
 
 # calling the main function
