@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 import requests
 import json
 import re
+import pymongo
 import datetime as dt
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
@@ -13,18 +14,19 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 url = 'https://www.asicminervalue.com/'
 
-time1 = dt.datetime.now()
+time1 = dt.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
 
 
 def main():
     try:
         dict_of_machines = {}
+        list_of_machines=[]
         counter = 1
         link_of_machines = get_all_links_of_website_pages(url)
-        for machine in link_of_machines:
+        for machine in link_of_machines[:2]:
+            dict_of_one_machine_spec={}
             dict_of_one_machine_spec = get_specs_from_website_table(
                 url+machine[1:])
-            dict_of_machines['machine-'+str(counter)] = dict_of_one_machine_spec
             dict_of_one_machine_spec['coins'] = get_minable_coin_of_machine(
                 url+machine[1:])
             dict_of_one_machine_spec['available_stores'] = get_market_prices(
@@ -33,11 +35,12 @@ def main():
                 url+machine[1:])
             dict_of_one_machine_spec['available_mining_pools'] = get_available_mining_pools_of_one_machine(
                 url+machine[1:])
+            list_of_machines.append(dict_of_one_machine_spec)
             counter += 1
         time2=dt.datetime.now()
         print(counter)
-        dict_of_machines['time1'] = str(time1)
-        dict_of_machines['time1'] = str(time2)
+        dict_of_machines['time'] = str(time1)
+        dict_of_machines['data']=list_of_machines
         create_json_file('finaq_result.json', dict_of_machines)
     except:
         pass
@@ -84,7 +87,8 @@ def get_specs_from_website_table(url):
             list_of_specs_label.append(label.text)
         dict_of_machines_spec = {}
         for ele in range(0, len(list_of_specs_label)):
-            dict_of_machines_spec[list_of_specs_label[ele]] = list_of_specs[ele]
+            if list_of_specs_label[ele] !='Also known as':
+                dict_of_machines_spec[list_of_specs_label[ele]] = list_of_specs[ele]
         return dict_of_machines_spec
 
 
@@ -184,6 +188,16 @@ def get_available_mining_pools_of_one_machine(url):
                 'td', {'class': 'hidden-xs hidden-sm'}).find('b').text
             machine_available_pools.append(machine_available_pools_dict)
         return machine_available_pools
+
+
+
+
+
+def send_to_db(dict):
+    client=pymongo.MongoClient()
+    mydb=client['Crypto-mining']
+    asics=mydb['GPU-PoW']
+    asics.insert_many(dict)
 
 
 # calling the main function
