@@ -9,36 +9,26 @@ import pymongo
 import datetime as dt
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
-# Main function for webscraping machines
-
-# Selenium initliazing
-def webscraper_id():
-    options = webdriver.ChromeOptions()
-    options.headless = True
-    options.add_argument("window-size=1920,1080")
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options) 
-    return driver
 
 url = 'https://www.asicminervalue.com/'
 
 time1 = dt.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
 
-
+# main function to scrape machines data
 
 def main():
     dict_of_machines = {}
-    list_of_machines=[]
+    list_of_machines = []
     counter = 1
     headers = {
-                    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
-                }
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
+    }
     link_of_machines = get_all_links_of_website_pages(url)
-    for machine in link_of_machines:
+    for machine in link_of_machines[:len(link_of_machines)-1]:
         try:
-            source_code=requests.get(url+machine[1:],headers=headers,timeout=10)
-            dict_of_one_machine_spec={}
+            source_code = requests.get(
+                url+machine[1:], headers=headers, timeout=10)
+            dict_of_one_machine_spec = {}
             dict_of_one_machine_spec = get_specs_from_website_table(
                 source_code)
             dict_of_one_machine_spec['coins'] = get_minable_coin_of_machine(
@@ -51,20 +41,12 @@ def main():
                 source_code)
             list_of_machines.append(dict_of_one_machine_spec)
             counter += 1
-            print(counter)
         except:
             pass
-    time2=dt.datetime.now()
     dict_of_machines['time'] = str(time1)
-    dict_of_machines['data']=list_of_machines
+    dict_of_machines['data'] = list_of_machines
     send_to_db(dict_of_machines)
 
-
-# Selenium initliazing
-def webcraper_id():
-    DRIVER_PATH=r'C:\Users\user\Desktop\AllFolders\Coding2.0\CryptoMiningProject\packages\chromedriver.exe'
-    driver = webdriver.Chrome(executable_path=DRIVER_PATH)  
-    return driver
 
 # getting all machines link from the url page
 def get_all_links_of_website_pages(url):
@@ -97,8 +79,17 @@ def get_specs_from_website_table(sc):
             list_of_specs_label.append(label.text)
         dict_of_machines_spec = {}
         for ele in range(0, len(list_of_specs_label)):
-            if list_of_specs_label[ele] !='Also known as':
-                dict_of_machines_spec[list_of_specs_label[ele]] = list_of_specs[ele]
+            if list_of_specs_label[ele] != 'Also known as':
+                if list_of_specs_label[ele] == 'Weight':
+                    list_of_specs_label[ele] += '(g)'
+                else:
+                    if list_of_specs_label[ele] == 'Size':
+                        list_of_specs_label[ele] += '(mm)'
+                    else:
+                        if list_of_specs_label[ele] == 'Power':
+                            list_of_specs_label[ele] += '(w)'
+                dict_of_machines_spec[list_of_specs_label[ele]] = extract_numbers_from_specs(
+                    list_of_specs_label[ele], list_of_specs[ele])
         return dict_of_machines_spec
 
 
@@ -132,47 +123,100 @@ def remove_b_tags(string):
     return string[left_index:right_index]
 
 # get market price and stores for one machine
-
-
-
-
 def get_market_prices(sc):
-    source_code1=sc
+    source_code1 = sc
     list_of_markets = []
-    soup=BeautifulSoup(source_code1.text,'lxml')
-    find_table=soup.find('table',{'id':'datatable_opportunities'})
+    soup = BeautifulSoup(source_code1.text, 'lxml')
+    find_table = soup.find('table', {'id': 'datatable_opportunities'})
     if find_table is not None:
-        find_body=find_table.find('tbody')
-        find_row=find_body.find_all('tr')
-        l=[]
+        find_body = find_table.find('tbody')
+        find_row = find_body.find_all('tr')
         for row in find_row:
-            dict_of_stores={}
-            price_loc=row.find('td',{'class':'text-center','style':'vertical-align: middle;  width:180px; font-size:1.2em;'})
-            dict_of_stores['store_name']=row.find('b').text
-            dict_of_stores['url']=row.find('a').get('href')
-            dict_of_stores['price']=price_loc.find('b').text
-            dict_of_stores['country']=row.find('span',{'style':'float:right;text-align:center;'}).find('img').get('title')
+            dict_of_stores = {}
+            price_loc = row.find('td', {
+                                 'class': 'text-center', 'style': 'vertical-align: middle;  width:180px; font-size:1.2em;'})
+            dict_of_stores['store_name'] = row.find('b').text
+            dict_of_stores['url'] = row.find('a').get('href')
+            dict_of_stores['price'] = price_loc.find('b').text
+            dict_of_stores['country'] = row.find(
+                'span', {'style': 'float:right;text-align:center;'}).find('img').get('title')
             list_of_markets.append(dict_of_stores)
 
         return list_of_markets
 
-
+# get algorithmes of each machine
 def get_algorithm_of_one_machine(sc):
     source_code = sc
+    list_of_algo=[]
     scraper = BeautifulSoup(source_code.text, 'lxml')
     locate_table = scraper.find('table', {'class': 'table table-striped'})
     if locate_table is not None:
         locate_body = locate_table.find('tbody')
         locate_rows = locate_body.find_all('tr')
-        machine_algos = {}
         for row in locate_rows:
-            machine_algos['Algorithm_name'] = row.find('b').text
-            list_of_usage = row.find('div').text.split(' ')
-            machine_algos['hashrate'] = list_of_usage[0]
-            machine_algos['power_consumption'] = list_of_usage[1]
-        return machine_algos
+            machine_algos = {}
+            try:
+                machine_algos['Algorithm_name'] = row.find('b').text
+                list_of_usage = row.find('div').text.split(' ')
+                machine_algos['hashrate(H/hour) '] = convert_to_hash_per_hour(
+                    extract_numbers(list_of_usage[0]), extract_unit_from_string(list_of_usage[0]))
+                machine_algos['power_consumption(W)'] = extract_numbers(
+                    list_of_usage[1])
+                list_of_algo.append(machine_algos)
+            except:
+                pass
+        return list_of_algo
 
+# convert to h/s
+def convert_to_hash_per_second(amount, unit):
+    if unit == 'kh/s':
+        amount *= 1000
+    else:
+        if unit == 'mh/s':
+            amount *= 1000000
+        else:
+            if unit == 'gh/s':
+                amount *= 1000000000
+            else:
+                if unit == 'th/s':
+                    amount *= 1000000000000
+                else:
+                    if unit == 'ph/s':
+                        amount *= 1000000000000000
+                    else:
+                        if unit == 'eh/s':
+                            amount *= 1000000000000000000
+    return amount
 
+# convert from h/s to h/hour
+def convert_to_hash_per_hour(amount, unit):
+    return convert_to_hash_per_second(amount, unit)*3600
+
+#extract numbers from a string
+
+def extract_numbers(string):
+    new_string=''
+    for i in string:
+        if i in '1234567890.%':
+            new_string=new_string+i
+    if '%' in new_string:
+        new_string=new_string.replace('%','')
+        return float(new_string)/100
+    try:
+        return float(new_string)
+    except:
+        return string
+
+# extract unit from a string for conversion
+def extract_unit_from_string(string):
+    finder = 0
+    for i in range(0, len(string)):
+        if string[i] not in '1234567890.':
+            finder = i
+            break
+    return string[finder:].lower()
+
+# get available mining pools for each machine
 def get_available_mining_pools_of_one_machine(sc):
     source_code = sc
     scraper = BeautifulSoup(source_code.text, 'lxml')
@@ -185,25 +229,33 @@ def get_available_mining_pools_of_one_machine(sc):
         for row in locate_rows:
             machine_available_pools_dict = {}
             machine_available_pools_dict['pool_name'] = row.find('b').text
-            machine_available_pools_dict['url_link'] = row.find('a').get('href')
+            machine_available_pools_dict['url_link'] = row.find(
+                'a').get('href')
             machine_available_pools_dict['profit_type'] = row.find(
                 'td', {'class': 'hidden-xs hidden-sm'}).find('b').text
+            machine_available_pools_dict['profit_perc'] = extract_numbers(row.find(
+                'td', {'class': 'hidden-xs hidden-sm'}).text)
             machine_available_pools.append(machine_available_pools_dict)
         return machine_available_pools
 
-
-
-
-
+#Migrate data to database
 def send_to_db(dict):
-    client=pymongo.MongoClient()
-    mydb=client['Crypto-mining']
-    asics=mydb['ASICS-PoW']
-    if asics.find_one() != {}:
-        asics.delete_many({})
-        asics.insert_one(dict)
+    client = pymongo.MongoClient()
+    mydb = client['Crypto-mining']
+    asics = mydb['ASICS-PoW']
+    asics.insert_one(dict)
 
-
+#turn some specs value into integer
+def extract_numbers_from_specs(label_name, val):
+    if label_name == 'Size(mm)':
+        res = val.split('x')
+        dimension = {'x': float(res[0]), 'y': float(
+            res[1]), 'z': extract_numbers(res[2])}
+        return dimension
+    else:
+        if label_name == 'Weight(g)' or label_name == 'Power(w)':
+            return extract_numbers(val)
+    return val
 
 
 # calling the main function
