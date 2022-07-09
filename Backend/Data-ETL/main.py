@@ -5,3 +5,6 @@ DO NOT RUN UNTIL ALL SCRIPTS ARE WORKING AND TESTED
 """
 
 # imports
+import Webscrapers.WS_ASICsmachines as Asics
+
+
