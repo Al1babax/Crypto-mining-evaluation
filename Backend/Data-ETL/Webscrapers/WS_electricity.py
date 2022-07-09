@@ -22,7 +22,6 @@ import os
 import numpy as np
 import pymongo
 
-
 # Settings
 options = webdriver.ChromeOptions()
 options.headless = True
@@ -40,12 +39,13 @@ current_time = time1.strftime("%Y-%m-%dT%H_%M_%S")
 # In[2]:
 
 
-def element_by_id(id1:str):
+def element_by_id(id1: str):
     element = driver.find_element(by=By.ID, value=id1)
     return element
 
-def element_by_selector(selector:str):
-    element = driver.find_element(by= By.CSS_SELECTOR, value=selector)
+
+def element_by_selector(selector: str):
+    element = driver.find_element(by=By.CSS_SELECTOR, value=selector)
     return element
 
 
@@ -56,8 +56,10 @@ def finland_electricity():
     time.sleep(3)
     driver.get(start_url)
     time.sleep(20)
-    info_box = element_by_selector("#blokki-3 > div > section > div > div > div.column.is-6-desktop.is-offset-1-desktop > div > div > div.hourly-prices-chart-data > div.hourly-prices-chart-data-pricecards.mb-4")
-    daily_info = element_by_selector("#blokki-3 > div > section > div > div > div.column.is-6-desktop.is-offset-1-desktop > div > div > div.hourly-prices-chart-data > div.hourly-prices-chart-average-prices")
+    info_box = element_by_selector(
+        "#blokki-3 > div > section > div > div > div.column.is-6-desktop.is-offset-1-desktop > div > div > div.hourly-prices-chart-data > div.hourly-prices-chart-data-pricecards.mb-4")
+    daily_info = element_by_selector(
+        "#blokki-3 > div > section > div > div > div.column.is-6-desktop.is-offset-1-desktop > div > div > div.hourly-prices-chart-data > div.hourly-prices-chart-average-prices")
 
     overall_info_list = info_box.text.split("\n")
     daily_info_list = daily_info.text.split("\n")
@@ -66,9 +68,10 @@ def finland_electricity():
     current_price = float(overall_info_list[1].split(" ")[0].replace(",", ".")) + 0.25
     day_average = float(daily_info_list[0].split(":")[1].lstrip().split(" ")[0].replace(",", ".")) + 0.25
     night_average = float(daily_info_list[1].split(":")[1].lstrip().split(" ")[0].replace(",", ".")) + 0.25
-    yearly_average = float(overall_info_list[-2].split(" ")[0].replace(",",".")) + 0.25
+    yearly_average = float(overall_info_list[-2].split(" ")[0].replace(",", ".")) + 0.25
 
-    data = [{"currency":"cent/kWh €", "current_price":current_price, "day_average":day_average, "night_average":night_average, "yearly_average":yearly_average, "electricity_company_cut":0.25}]
+    data = [{"currency": "cent/kWh €", "current_price": current_price, "day_average": day_average,
+             "night_average": night_average, "yearly_average": yearly_average, "electricity_company_cut": 0.25}]
     df2 = pd.DataFrame(data)
     return df2
 
@@ -79,12 +82,13 @@ def finland_electricity():
 def usa_electricity():
     driver.get(usa_url)
     time.sleep(20)
-    data = element_by_selector("body > div.eb-state-container > div > div.eb-landing-page-container > div.html-embed-scroll.w-embed")
+    data = element_by_selector(
+        "body > div.eb-state-container > div > div.eb-landing-page-container > div.html-embed-scroll.w-embed")
 
     state_data = data.text.split("\n")[3:]
     all_data = []
     for state in state_data:
-        temp_data = {"currency":"cent/kWh $"}
+        temp_data = {"currency": "cent/kWh $"}
         temp_info = state.split(" ")
 
         while temp_info[1].isalpha():
@@ -106,34 +110,27 @@ def usa_electricity():
 # In[5]:
 
 
-def write_mongodb(df1, df2):
+def write_mongodb(df1, df2, time1):
     client = pymongo.MongoClient()
     db = client["Electricity"]
 
-    #USA database write
+    # USA database write
     collection = db["USA"]
-    collection.insert_one({"date": current_time, "data":df2.to_dict(orient="records")})
+    collection.insert_one({"date": time1, "data": df2.to_dict(orient="records")})
 
-    #Finland database write
+    # Finland database write
     collection = db["Finland"]
-    collection.insert_one({"date": current_time, "data":df1.to_dict(orient="records")})
+    collection.insert_one({"date": time1, "data": df1.to_dict(orient="records")})
 
 
 # In[6]:
 
 
-def main():
+def main(time1):
     start_time = dt.datetime.now()
     finland_df = finland_electricity()
     usa_df = usa_electricity()
-    write_mongodb(finland_df, usa_df)
+    write_mongodb(finland_df, usa_df, time1)
     driver.quit()
     print(f"Runtime: {dt.datetime.now() - start_time} seconds")
-
-
-# In[7]:
-
-
-if __name__ == '__main__':
-    main()
 

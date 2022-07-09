@@ -37,19 +37,19 @@ def api_coins():
 # In[4]:
 
 
-def write_database(df):
+def write_database(df, time1):
     db = client["Coin-Data"]
     col = db["Current_coin"]
-    col.insert_one({"date": current_time, "data":df.to_dict(orient="records")})
+    col.insert_one({"date": time1, "data":df.to_dict(orient="records")})
 
 
 # In[5]:
 
 
-def main():
+def main(time1):
     start_time = dt.datetime.now()
     df = api_coins()
-    write_database(df)
+    write_database(df, time1)
     print(f"Runtime: {dt.datetime.now() - start_time} seconds")
 
 

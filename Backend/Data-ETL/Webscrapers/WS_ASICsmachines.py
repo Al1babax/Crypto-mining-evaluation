@@ -46,7 +46,7 @@ def main():
     dict_of_machines['time'] = str(time1)
     dict_of_machines['data'] = list_of_machines
     send_to_db(dict_of_machines)
-
+    return time1
 
 # getting all machines link from the url page
 def get_all_links_of_website_pages(url):
