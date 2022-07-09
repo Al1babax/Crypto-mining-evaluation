@@ -14,6 +14,7 @@ url = 'https://www.asicminervalue.com/'
 
 time1 = dt.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
 
+
 # main function to scrape machines data
 
 def main():
@@ -24,10 +25,10 @@ def main():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
     }
     link_of_machines = get_all_links_of_website_pages(url)
-    for machine in link_of_machines[:len(link_of_machines)-1]:
+    for machine in link_of_machines[:len(link_of_machines) - 1]:
         try:
             source_code = requests.get(
-                url+machine[1:], headers=headers, timeout=10)
+                url + machine[1:], headers=headers, timeout=10)
             dict_of_one_machine_spec = {}
             dict_of_one_machine_spec = get_specs_from_website_table(
                 source_code)
@@ -47,6 +48,7 @@ def main():
     dict_of_machines['data'] = list_of_machines
     send_to_db(dict_of_machines)
     return time1
+
 
 # getting all machines link from the url page
 def get_all_links_of_website_pages(url):
@@ -112,6 +114,7 @@ def get_minable_coin_of_machine(sc):
                 list_of_minable_coins.append(remove_b_tags(coin))
         return list_of_minable_coins
 
+
 # remove <b> from one coins data
 
 
@@ -121,6 +124,7 @@ def remove_b_tags(string):
     right = re.search('</b>', string)
     right_index = right.span()[0]
     return string[left_index:right_index]
+
 
 # get market price and stores for one machine
 def get_market_prices(sc):
@@ -134,7 +138,7 @@ def get_market_prices(sc):
         for row in find_row:
             dict_of_stores = {}
             price_loc = row.find('td', {
-                                 'class': 'text-center', 'style': 'vertical-align: middle;  width:180px; font-size:1.2em;'})
+                'class': 'text-center', 'style': 'vertical-align: middle;  width:180px; font-size:1.2em;'})
             dict_of_stores['store_name'] = row.find('b').text
             dict_of_stores['url'] = row.find('a').get('href')
             dict_of_stores['price'] = price_loc.find('b').text
@@ -144,10 +148,11 @@ def get_market_prices(sc):
 
         return list_of_markets
 
+
 # get algorithmes of each machine
 def get_algorithm_of_one_machine(sc):
     source_code = sc
-    list_of_algo=[]
+    list_of_algo = []
     scraper = BeautifulSoup(source_code.text, 'lxml')
     locate_table = scraper.find('table', {'class': 'table table-striped'})
     if locate_table is not None:
@@ -166,6 +171,7 @@ def get_algorithm_of_one_machine(sc):
             except:
                 pass
         return list_of_algo
+
 
 # convert to h/s
 def convert_to_hash_per_second(amount, unit):
@@ -188,24 +194,27 @@ def convert_to_hash_per_second(amount, unit):
                             amount *= 1000000000000000000
     return amount
 
+
 # convert from h/s to h/hour
 def convert_to_hash_per_hour(amount, unit):
-    return convert_to_hash_per_second(amount, unit)*3600
+    return convert_to_hash_per_second(amount, unit) * 3600
 
-#extract numbers from a string
+
+# extract numbers from a string
 
 def extract_numbers(string):
-    new_string=''
+    new_string = ''
     for i in string:
         if i in '1234567890.%':
-            new_string=new_string+i
+            new_string = new_string + i
     if '%' in new_string:
-        new_string=new_string.replace('%','')
-        return float(new_string)/100
+        new_string = new_string.replace('%', '')
+        return float(new_string) / 100
     try:
         return float(new_string)
     except:
         return string
+
 
 # extract unit from a string for conversion
 def extract_unit_from_string(string):
@@ -215,6 +224,7 @@ def extract_unit_from_string(string):
             finder = i
             break
     return string[finder:].lower()
+
 
 # get available mining pools for each machine
 def get_available_mining_pools_of_one_machine(sc):
@@ -238,14 +248,16 @@ def get_available_mining_pools_of_one_machine(sc):
             machine_available_pools.append(machine_available_pools_dict)
         return machine_available_pools
 
-#Migrate data to database
+
+# Migrate data to database
 def send_to_db(dict):
     client = pymongo.MongoClient()
     mydb = client['Crypto-mining']
     asics = mydb['ASICS-PoW']
     asics.insert_one(dict)
 
-#turn some specs value into integer
+
+# turn some specs value into integer
 def extract_numbers_from_specs(label_name, val):
     if label_name == 'Size(mm)':
         res = val.split('x')
@@ -259,4 +271,5 @@ def extract_numbers_from_specs(label_name, val):
 
 
 # calling the main function
-main()
+if __name__ == '__main__':
+    main()
