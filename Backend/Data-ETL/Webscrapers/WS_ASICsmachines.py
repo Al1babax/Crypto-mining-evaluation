@@ -197,7 +197,7 @@ def convert_to_hash_per_second(amount, unit):
 
 # convert from h/s to h/hour
 def convert_to_hash_per_hour(amount, unit):
-    return convert_to_hash_per_second(amount, unit) * 3600
+    return convert_to_hash_per_second(amount, unit)
 
 
 # extract numbers from a string
