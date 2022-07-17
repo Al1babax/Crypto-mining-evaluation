@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[186]:
 
 
 import requests
@@ -25,8 +25,8 @@ import pymongo
 
 # Settings
 options = webdriver.ChromeOptions()
-options.headless = False
-options.add_argument("window-size=1920,1080")
+options.headless = True
+options.add_argument("--window-size=1920,1080")
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
@@ -36,7 +36,7 @@ time1 = dt.datetime.now()
 current_time = time1.strftime("%Y-%m-%dT%H_%M_%S")
 
 
-# In[20]:
+# In[187]:
 
 
 def element_by_id(id1:str):
@@ -44,7 +44,7 @@ def element_by_id(id1:str):
     return element
 
 
-# In[21]:
+# In[188]:
 
 
 def element_by_selector(selector:str):
@@ -52,7 +52,7 @@ def element_by_selector(selector:str):
     return element
 
 
-# In[22]:
+# In[189]:
 
 
 def country_info_input(country:str, postalcode:str, from1 = False):
@@ -72,7 +72,7 @@ def country_info_input(country:str, postalcode:str, from1 = False):
     postal_input.send_keys(postalcode)
 
 
-# In[23]:
+# In[190]:
 
 
 def setup_search(countries:list, postalcodes:list, from1:list, package_specs:dict):
@@ -116,7 +116,7 @@ def setup_search(countries:list, postalcodes:list, from1:list, package_specs:dic
     find_price.click()
 
 
-# In[24]:
+# In[191]:
 
 
 def scrape_data():
@@ -125,7 +125,7 @@ def scrape_data():
     return result
 
 
-# In[25]:
+# In[192]:
 
 
 def jsonfy_data(data, from1, to1):  # Going through data taking some info --> turning into dataframe --> lastly to record json for mongodb
@@ -146,14 +146,14 @@ def jsonfy_data(data, from1, to1):  # Going through data taking some info --> tu
     return df
 
 
-# In[26]:
+# In[193]:
 
 
 def push_to_mongodb(data):  # TODO mongodb write
     pass
 
 
-# In[81]:
+# In[194]:
 
 
 def check_init_input(from1, to1, package_measures):
@@ -166,7 +166,7 @@ def check_init_input(from1, to1, package_measures):
         for state in r2.readlines():
             us_states_list.append(state[:-1])
 
-    print(us_states_list)
+    # print(us_states_list)
     # Checking if countries exists
     if (from1.capitalize() in country_list and to1.capitalize() in country_list) or (from1 in us_states_list and to1 in us_states_list):
         # Checking that package_measures have all the info
@@ -190,46 +190,103 @@ def check_init_input(from1, to1, package_measures):
         return False
 
 
-# In[129]:
+# In[195]:
 
 
 def get_zipcode(country):
     # get zipcode for country or us state
+
+    # if Finland
     if country.lower() == "finland":
         return "00100"
-
-    df = pd.read_json("resources/uszips.json")
-    zip_code = df[df["state_name"] == country]["zip"].iloc[3]
-    if len(str(zip_code)) == 3:
-        return "00" + str(zip_code)
-    elif len(str(zip_code)) == 4:
-        return "0" + str(zip_code)
     else:
-        return str(zip_code)
+        print("Not Finland")
+
+    # if US state
+    df = pd.read_json("resources/uszips.json")
+    test_df = df[df["state_name"] == country]
+    if str(test_df.shape) == "(0, 18)":
+        print("Not US state")
+    else:
+        zip_code = df[df["state_name"] == country]["zip"].iloc[3]
+        if len(str(zip_code)) == 3:
+            return "00" + str(zip_code)
+        elif len(str(zip_code)) == 4:
+            return "0" + str(zip_code)
+        elif len(str(zip_code)) == 5:
+            return str(zip_code)
+
+    # if Other country
+    client = pymongo.MongoClient()
+    db = client["Shipments"]
+    col = db["addresses"]
+    data = col.find_one({})
+    df2 = pd.DataFrame(data["data"])
+    result_df = df2[df2["country"] == country]
+    if str(result_df.shape) == "(0, 2)":
+        print("Not other country")
+    else:
+        return str(result_df.iloc[0, 1])
+
+    return False
 
 
-# In[27]:
+# In[196]:
 
 
-def main(from1, to1, package_measures):
-    time.sleep(3)
+def main(from1, to1, package_measures, from_zipcode, to_zipcode):
+    time.sleep(1)
     driver.get(start_url)
-    time.sleep(10)
-    setup_search([from1, to1], ["8000", "00100"], [True, False], {"weight":"20", "length":"20", "width":"30", "height":"5"}) # TODO setup zipcode check from database and using get_zipcode() function
-    time.sleep(20)
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(driver.find_element(By.ID, "package-input-origin")))
+    if from_zipcode is None:
+        from_zipcode = get_zipcode(from1)
+    if to_zipcode is None:
+        to_zipcode = get_zipcode(to1)
+    if from_zipcode is False or to_zipcode is False:
+        return False
+    setup_search([from1, to1], [from_zipcode, to_zipcode], [True, False], package_measures)
+    WebDriverWait(driver, 60).until(method=EC.visibility_of_element_located((By.CLASS_NAME, "result")))
     raw_data = scrape_data()
     df = jsonfy_data(raw_data, from1, to1)
     push_to_mongodb(df)
     driver.quit()
+    return df
 
 
-# In[ ]:
+# In[197]:
 
 
-def init(from1:str, to1:str, package_measures:dict):
-    try:
+def init(from1: str, to1: str, package_measures: dict,from_zipcode: str=None, to_zipcode: str=None):
+    """
+    :param to_zipcode: Optional
+    :param from_zipcode: Optional
+    :param from1: str Have to be capitalized and written correctly (country/state)
+    :param to1: str Have to be capitalized and written correctly (country/state)
+    :param package_measures: Example input {"weight":"20", "length":"20", "width":"30", "height":"5"} -- Weight in lb(pounds), length measurements in In(inches)
+    :return:
+    """
+    check_init_input(from1, to1, package_measures)
+    data = main(from1, to1, package_measures, from_zipcode, to_zipcode)
+    if data is False:
+        print("Country or state is not in database or is invalid")
+    return data.to_dict(orient="records")
+"""    try:
         check_init_input(from1, to1, package_measures)
-        main(from1, to1, package_measures)
+        data = main(from1, to1, package_measures)
+        return data
     except:
-        print("Unexpected error")
+        print("Unexpected error")"""
+
+
+# In[198]:
+
+
+# info = init("Belgium", "Texas", {"weight":"20", "length":"20", "width":"30", "height":"5"}, "2440", "75226")
+# print(info)
+
+
+# In[198]:
+
+
+
 
