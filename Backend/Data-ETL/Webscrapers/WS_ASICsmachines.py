@@ -14,8 +14,10 @@ url = 'https://www.asicminervalue.com/'
 
 time1 = dt.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
 
-
+client = pymongo.MongoClient()
+mydb = client['Crypto-mining']
 # main function to scrape machines data
+
 
 def main():
     dict_of_machines = {}
@@ -42,11 +44,13 @@ def main():
                 source_code)
             list_of_machines.append(dict_of_one_machine_spec)
             counter += 1
+            print(counter)
         except:
             pass
+    asics = mydb['ASICS-PoW-final']
     dict_of_machines['time'] = str(time1)
     dict_of_machines['data'] = list_of_machines
-    send_to_db(dict_of_machines)
+    send_to_db(dict_of_machines, asics)
     return time1
 
 
@@ -105,11 +109,12 @@ def create_json_file(destination, dict):
 def get_minable_coin_of_machine(sc):
     source_code = sc
     soup = BeautifulSoup(source_code.text, 'lxml')
-    locate_div = soup.find_all('img', class_='img-responsive')
+    locate_div = soup.find_all(
+        'div', {'style': 'padding:4px;float:left;width:60px;height:60px;'})
     if locate_div is not None:
         list_of_minable_coins = []
         for i in locate_div:
-            coin = i.get('title')
+            coin = i.find('img', {'class': 'img-responsive'}).get('title')
             if coin is not None:
                 list_of_minable_coins.append(remove_b_tags(coin))
         return list_of_minable_coins
@@ -144,6 +149,14 @@ def get_market_prices(sc):
             dict_of_stores['price'] = price_loc.find('b').text
             dict_of_stores['country'] = row.find(
                 'span', {'style': 'float:right;text-align:center;'}).find('img').get('title')
+            dict_of_stores['stock'] = row.find(
+                'td', {'class': 'text-center', 'style': 'vertical-align: middle; font-size:1.1em;'}).text
+            price_type = row.find('td', {'class': 'text-center hidden-xs hidden-sm',
+                                  'style': 'vertical-align: middle; font-size:1.1em;'}).text[:14]
+            if price_type == 'Free Shipping':
+                dict_of_stores['isFreeShipping'] = True
+            else:
+                dict_of_stores['isFreeShipping'] = False
             list_of_markets.append(dict_of_stores)
 
         return list_of_markets
@@ -197,7 +210,7 @@ def convert_to_hash_per_second(amount, unit):
 
 # convert from h/s to h/hour
 def convert_to_hash_per_hour(amount, unit):
-    return convert_to_hash_per_second(amount, unit) * 3600
+    return convert_to_hash_per_second(amount, unit)
 
 
 # extract numbers from a string
@@ -248,13 +261,11 @@ def get_available_mining_pools_of_one_machine(sc):
             machine_available_pools.append(machine_available_pools_dict)
         return machine_available_pools
 
-
 # Migrate data to database
-def send_to_db(dict):
-    client = pymongo.MongoClient()
-    mydb = client['Crypto-mining']
-    asics = mydb['ASICS-PoW']
-    asics.insert_one(dict)
+
+
+def send_to_db(liste, collection):
+    collection.insert_one(liste)
 
 
 # turn some specs value into integer
@@ -271,5 +282,4 @@ def extract_numbers_from_specs(label_name, val):
 
 
 # calling the main function
-if __name__ == '__main__':
-    main()
+main()
