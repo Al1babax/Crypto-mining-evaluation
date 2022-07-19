@@ -162,7 +162,7 @@ def get_market_prices(sc):
         return list_of_markets
 
 
-# get algorithmes of each machine
+# get algorithms of each machine
 def get_algorithm_of_one_machine(sc):
     source_code = sc
     list_of_algo = []
@@ -176,7 +176,7 @@ def get_algorithm_of_one_machine(sc):
             try:
                 machine_algos['Algorithm_name'] = row.find('b').text
                 list_of_usage = row.find('div').text.split(' ')
-                machine_algos['hashrate(H/hour) '] = convert_to_hash_per_hour(
+                machine_algos['hashrate(H/second) '] = convert_to_hash_per_hour(
                     extract_numbers(list_of_usage[0]), extract_unit_from_string(list_of_usage[0]))
                 machine_algos['power_consumption(W)'] = extract_numbers(
                     list_of_usage[1])
@@ -189,22 +189,22 @@ def get_algorithm_of_one_machine(sc):
 # convert to h/s
 def convert_to_hash_per_second(amount, unit):
     if unit == 'kh/s':
-        amount *= 1000
+        amount *= 1_000
     else:
         if unit == 'mh/s':
-            amount *= 1000000
+            amount *= 1_000_000
         else:
             if unit == 'gh/s':
-                amount *= 1000000000
+                amount *= 1_000_000_000
             else:
                 if unit == 'th/s':
-                    amount *= 1000000000000
+                    amount *= 1_000_000_000_000
                 else:
                     if unit == 'ph/s':
-                        amount *= 1000000000000000
+                        amount *= 1_000_000_000_000_000
                     else:
                         if unit == 'eh/s':
-                            amount *= 1000000000000000000
+                            amount *= 1_000_000_000_000_000_000
     return amount
 
 
@@ -282,4 +282,5 @@ def extract_numbers_from_specs(label_name, val):
 
 
 # calling the main function
-main()
+if __name__ == '__main__':
+    main()
