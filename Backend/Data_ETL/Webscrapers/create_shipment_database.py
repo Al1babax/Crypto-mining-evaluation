@@ -17,7 +17,7 @@ import datetime as dt
 time = "2022-07-17T20_14_41"
 client = pymongo.MongoClient()
 db = client["Crypto-mining"]
-col = db["ASICS-PoW"]
+col = db["ASICS-PoW-final"]
 
 
 # In[3]:
