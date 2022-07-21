@@ -23,3 +23,8 @@ def fetch_machine(machine_name: str, request: Request, response: Response):
                 return machine
         except:
             response.status_code = status.HTTP_404_NOT_FOUND
+
+
+@app.get("/api/profit_data")
+def profit_data(request: Request, response: Response):
+    pass
