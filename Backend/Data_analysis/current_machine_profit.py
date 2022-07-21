@@ -12,12 +12,10 @@ import datetime as dt
 # # Things to note in calculating current profit
 # - Expenses
 # -- Machine price
-# -- Shipment cost
-# -- Taxes
 # -- Electricity price
 # -----------------------------------
 # - Revenue
-# -- Profit per mining power per hour
+# -- Profit per mining power per hour/day/month
 
 # In[2]:
 
