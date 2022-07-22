@@ -1,7 +1,32 @@
-from fastapi import FastAPI, Request, Response, status
-import fastapi
+from typing import Optional
+from fastapi import FastAPI, Response, status, HTTPException, Cookie, Form, UploadFile, File, Request
+from pydantic import BaseModel
+import pymongo
+from fastapi.middleware.cors import CORSMiddleware
+from uuid import uuid4
+import datetime as dt
+
+# Import scripts
 import beta_version2
+import funcs.profit_data_script as pds
+
+# Setup app
 app = FastAPI()
+
+client = pymongo.MongoClient()
+# Cors allowed origins
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins="*",  # Temporarily all because testing --> later on remember to change only localhost
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get('/', status_code=200)
@@ -26,5 +51,10 @@ def fetch_machine(machine_name: str, request: Request, response: Response):
 
 
 @app.get("/api/profit_data")
-def profit_data(request: Request, response: Response):
-    pass
+def profit_data(response: Response, country, coin=None, algorithm=None, machine_name=None):
+    try:
+        profit_json = pds.main(country, coin, algorithm, machine_name)
+        response.status_code = status.HTTP_200_OK
+        return profit_json
+    except:
+        response.status_code = status.HTTP_400_BAD_REQUEST
