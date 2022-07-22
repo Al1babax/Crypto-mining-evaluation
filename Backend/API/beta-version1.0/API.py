@@ -29,17 +29,17 @@ app.add_middleware(
 )
 
 
-@app.get('/', status_code=200)
+"""@app.get('/', status_code=200)
 def render_machines(request: Request, response: Response):
     try:
         render_machines.list_of_sorted_machines = beta_version2.sort_machines()
         response.status_code = status.HTTP_200_OK
     except:
         response.status_code = status.HTTP_404_NOT_FOUND
-    return render_machines.list_of_sorted_machines
+    return render_machines.list_of_sorted_machines"""
 
 
-@app.get('/{machine_name}', status_code=200)
+"""@app.get('/{machine_name}', status_code=200)
 def fetch_machine(machine_name: str, request: Request, response: Response):
     for machine in render_machines.list_of_sorted_machines:
         try:
@@ -47,13 +47,13 @@ def fetch_machine(machine_name: str, request: Request, response: Response):
                 response.status_code = status.HTTP_200_OK
                 return machine
         except:
-            response.status_code = status.HTTP_404_NOT_FOUND
+            response.status_code = status.HTTP_404_NOT_FOUND"""
 
 
 @app.get("/api/profit_data")
-def profit_data(response: Response, country, coin=None, algorithm=None, machine_name=None):
+async def profit_data(response: Response, country, coin=None, algorithm=None, machine_name=None):
     try:
-        profit_json = pds.main(country, coin, algorithm, machine_name)
+        profit_json = await pds.main(country, coin, algorithm, machine_name)
         response.status_code = status.HTTP_200_OK
         return profit_json
     except:
