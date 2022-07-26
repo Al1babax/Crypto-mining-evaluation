@@ -27,7 +27,7 @@ def main():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
     }
     link_of_machines = get_all_links_of_website_pages(url)
-    for machine in link_of_machines[:len(link_of_machines) - 1]:
+    for machine in link_of_machines[:2]:
         try:
             source_code = requests.get(
                 url + machine[1:], headers=headers, timeout=10)
@@ -47,7 +47,7 @@ def main():
             print(counter)
         except:
             pass
-    asics = mydb['ASICS-PoW-final']
+    asics = mydb['ASICS-PoW-final2']
     dict_of_machines['time'] = str(time1)
     dict_of_machines['data'] = list_of_machines
     send_to_db(dict_of_machines, asics)
@@ -153,7 +153,8 @@ def get_market_prices(sc):
                 'td', {'class': 'text-center', 'style': 'vertical-align: middle; font-size:1.1em;'}).text
             price_type = row.find('td', {'class': 'text-center hidden-xs hidden-sm',
                                   'style': 'vertical-align: middle; font-size:1.1em;'}).text[:14]
-            if price_type == 'Free Shipping':
+            print(price_type)
+            if 'Free shipping' in price_type:
                 dict_of_stores['isFreeShipping'] = True
             else:
                 dict_of_stores['isFreeShipping'] = False
@@ -162,7 +163,7 @@ def get_market_prices(sc):
         return list_of_markets
 
 
-# get algorithms of each machine
+# get algorithmes of each machine
 def get_algorithm_of_one_machine(sc):
     source_code = sc
     list_of_algo = []
@@ -176,7 +177,7 @@ def get_algorithm_of_one_machine(sc):
             try:
                 machine_algos['Algorithm_name'] = row.find('b').text
                 list_of_usage = row.find('div').text.split(' ')
-                machine_algos['hashrate(H/second) '] = convert_to_hash_per_hour(
+                machine_algos['hashrate(H/hour) '] = convert_to_hash_per_hour(
                     extract_numbers(list_of_usage[0]), extract_unit_from_string(list_of_usage[0]))
                 machine_algos['power_consumption(W)'] = extract_numbers(
                     list_of_usage[1])
@@ -189,22 +190,22 @@ def get_algorithm_of_one_machine(sc):
 # convert to h/s
 def convert_to_hash_per_second(amount, unit):
     if unit == 'kh/s':
-        amount *= 1_000
+        amount *= 1000
     else:
         if unit == 'mh/s':
-            amount *= 1_000_000
+            amount *= 1000000
         else:
             if unit == 'gh/s':
-                amount *= 1_000_000_000
+                amount *= 1000000000
             else:
                 if unit == 'th/s':
-                    amount *= 1_000_000_000_000
+                    amount *= 1000000000000
                 else:
                     if unit == 'ph/s':
-                        amount *= 1_000_000_000_000_000
+                        amount *= 1000000000000000
                     else:
                         if unit == 'eh/s':
-                            amount *= 1_000_000_000_000_000_000
+                            amount *= 1000000000000000000
     return amount
 
 
@@ -282,5 +283,4 @@ def extract_numbers_from_specs(label_name, val):
 
 
 # calling the main function
-if __name__ == '__main__':
-    main()
+main()
