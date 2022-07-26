@@ -41,6 +41,8 @@ def main():
     # with same time
     run_data_gathering()
 
+    # Data processing
+    pass
     # Automated tests
     # TODO automatic testing that scrapers are writing right data to database
     # TODO some kind of automatic logging that could be sent with email alert of something failing

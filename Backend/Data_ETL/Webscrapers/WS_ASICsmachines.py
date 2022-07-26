@@ -152,8 +152,9 @@ def get_market_prices(sc):
             dict_of_stores['stock'] = row.find(
                 'td', {'class': 'text-center', 'style': 'vertical-align: middle; font-size:1.1em;'}).text
             price_type = row.find('td', {'class': 'text-center hidden-xs hidden-sm',
-                                  'style': 'vertical-align: middle; font-size:1.1em;'}).text[:14]
-            if price_type == 'Free Shipping':
+                                         'style': 'vertical-align: middle; font-size:1.1em;'}).text[:14]
+            # print(price_type)
+            if 'Free shipping' in price_type:
                 dict_of_stores['isFreeShipping'] = True
             else:
                 dict_of_stores['isFreeShipping'] = False
