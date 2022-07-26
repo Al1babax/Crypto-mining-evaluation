@@ -27,7 +27,7 @@ def main():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
     }
     link_of_machines = get_all_links_of_website_pages(url)
-    for machine in link_of_machines[:2]:
+    for machine in link_of_machines[:len(link_of_machines) - 1]:
         try:
             source_code = requests.get(
                 url + machine[1:], headers=headers, timeout=10)
@@ -47,7 +47,7 @@ def main():
             print(counter)
         except:
             pass
-    asics = mydb['ASICS-PoW-final2']
+    asics = mydb['ASICS-PoW-final']
     dict_of_machines['time'] = str(time1)
     dict_of_machines['data'] = list_of_machines
     send_to_db(dict_of_machines, asics)
