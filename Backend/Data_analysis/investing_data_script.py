@@ -78,7 +78,7 @@ def make_destination_market_dataframes(market_df):
 # In[484]:
 
 
-def create_country_mapping(fin_market_df):
+def create_country_mapping(fin_market_df):  # TODO need to make better mapping at some point
     # This can be run if new countries are needed to be mapped
     """countries = []
     for x in range(fin_market_df.shape[0]):
@@ -237,7 +237,7 @@ def calculate_shipment(data, shipment_df:pd.DataFrame, to_country):
         return 0
     # print(to_country)
     # print(data["size_category"])
-
+    # print(data)
     ship_df = shipment_df[(shipment_df["to"] == to_country) & (shipment_df["class"] == data["size_category"])]
     if data["continent"] == "EU":
         ship_df = ship_df[ship_df["from"] == "Germany"]
@@ -275,6 +275,8 @@ def include_shipping_taxes(country1, country_market_df, country_mapping, machine
             elif country in country_mapping["US"]:
                 temp_dict["continent"] = "US"
             elif country in country_mapping["ASIA"]:
+                temp_dict["continent"] = "ASIA"
+            else:
                 temp_dict["continent"] = "ASIA"
 
             # print(temp_dict)

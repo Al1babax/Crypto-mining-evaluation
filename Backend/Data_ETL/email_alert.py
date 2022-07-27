@@ -21,3 +21,6 @@ def main(message):
 
         smtp.login(username, password)
         smtp.send_message(msg)
+
+
+main("Something went wrong with data cleaning and preparing for api")
