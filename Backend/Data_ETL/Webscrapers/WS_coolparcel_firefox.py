@@ -185,7 +185,7 @@ def check_init_input(from1, to1, package_measures):
     """
     country_list = []
     us_states_list = []
-    with open("resources/countries_list.txt") as r, open("resources/us_states.txt") as r2:
+    with open("Data_ETL/Webscrapers/resources/countries_list.txt") as r, open("Data_ETL/Webscrapers/resources//us_states.txt") as r2:
         for country in r.readlines():
             country_list.append(country[:-1])
 
@@ -230,7 +230,7 @@ def get_zipcode(country):
         # print("Not Finland")
 
     # if US state
-    df = pd.read_json("resources/uszips.json")
+    df = pd.read_json("Data_ETL/Webscrapers/resources/uszips.json")
     test_df = df[df["state_name"] == country]
     if str(test_df.shape) == "(0, 18)":
         pass
@@ -250,7 +250,7 @@ def get_zipcode(country):
     col = db["addresses"]
     data = col.find_one({})
     df2 = pd.DataFrame(data["data"])"""
-    df2 = pd.read_json("resources/other_countries_zipcodes.json")
+    df2 = pd.read_json("Data_ETL/Webscrapers/resources/other_countries_zipcodes.json")
     result_df = df2[df2["country"] == country]
     if str(result_df.shape) == "(0, 2)":
         print("Not other country")

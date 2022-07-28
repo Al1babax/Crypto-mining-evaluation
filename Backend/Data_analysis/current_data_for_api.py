@@ -104,8 +104,7 @@ def main(country, coin=None, pool=None, algorithm=None,
         """for machine in machine_names:
             all_data_df = all_data_df[all_data_df["coin"] == machine]"""
 
-    # return all_data_df
-    all_data_df.sort_values("final_profit_monthly", ascending=False, inplace=True)
+
     all_data_df["index"] = [str(x) for x in range(all_data_df.shape[0])]
     all_data_df = all_data_df.set_index("index")
 
