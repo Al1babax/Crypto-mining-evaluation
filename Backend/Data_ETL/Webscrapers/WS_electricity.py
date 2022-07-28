@@ -127,10 +127,12 @@ def write_mongodb(df1, df2, time1):
 
 
 def main(time1):
+    print("Starting scraping...")
     start_time = dt.datetime.now()
     finland_df = finland_electricity()
     usa_df = usa_electricity()
     write_mongodb(finland_df, usa_df, time1)
     driver.quit()
+    print("Scraping finished!")
     print(f"Runtime: {dt.datetime.now() - start_time} seconds")
 

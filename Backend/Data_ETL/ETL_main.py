@@ -8,7 +8,6 @@ DO NOT RUN UNTIL ALL SCRIPTS ARE WORKING AND TESTED
 import Webscrapers.WS_ASICsmachines as asics
 import Webscrapers.WS_electricity as ele
 import API_collectors.general_coin_data as coin
-import email_alert
 import datetime as dt
 
 # If the first script fails this time will be used
@@ -20,20 +19,18 @@ def run_data_gathering():
         time = asics.main()
     except:
         message = "Something went wrong with WS_ASICsmachines script"
-        email_alert.main(message)
         time = time2
-
+    print("------------------------------------------------------")
     try:
         ele.main(time)
     except:
         message = "Something went wrong with WS_electricity script"
-        email_alert.main(message)
-
+    print("------------------------------------------------------")
     try:
         coin.main(time)
     except:
         message = "Something went wrong with general_coin_data script"
-        email_alert.main(message)
+    print("------------------------------------------------------")
 
 
 def main():
@@ -41,6 +38,8 @@ def main():
     # with same time
     run_data_gathering()
 
+    # Data processing
+    pass
     # Automated tests
     # TODO automatic testing that scrapers are writing right data to database
     # TODO some kind of automatic logging that could be sent with email alert of something failing

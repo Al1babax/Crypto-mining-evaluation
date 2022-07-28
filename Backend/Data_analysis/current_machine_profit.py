@@ -131,11 +131,21 @@ def dataframe_for_algo(algo, country):
 
 # In[24]:
 def make_country_list():
-    with open("resources/us_states.txt") as r:
+    col = client["Electricity"]["USA"]
+    sort = list({'_id': -1}.items())
+    result = col.find(sort=sort, limit=1)
+    new_country_list = []
+    for x in result[0]["data"]:
+        new_country_list.append(x["state"])
+    new_country_list.remove("District of Columbia")
+    new_country_list.append("Finland")
+
+    return new_country_list
+    """with open("resources/us_states.txt") as r:
         data = r.readlines()
         data = list(map(lambda x: x[:-1], data))
         data.append("Finland")
-        return data
+        return data"""
 
 
 def main(country):
@@ -171,6 +181,20 @@ def main(country):
 
 
 # In[25]:
+def init():
+    start_time = dt.datetime.now()
+
+    print(f"[Program] Starting...")
+    country_list = make_country_list()
+
+    for x, country in enumerate(country_list):
+        print(f"[Progress] {(x + 1)}/{len(country_list)} ----- {round(((x + 1) / len(country_list) * 100), 2)}%")
+        print(f"[Algorithm] {country} in progress", end="...  ")
+        main(country)
+        print(f"done")
+
+    print(f"[RUNTIME] Total runtime: {dt.datetime.now() - start_time} seconds")
+
 
 if __name__ == '__main__':
     start_time = dt.datetime.now()
@@ -180,8 +204,8 @@ if __name__ == '__main__':
 
     for x, country in enumerate(country_list):
         print(f"[Progress] {(x + 1)}/{len(country_list)} ----- {round(((x + 1) / len(country_list) * 100), 2)}%")
-        print(f"[Algorithm] {country} in progress...")
+        print(f"[Algorithm] {country} in progress", end="...  ")
         main(country)
-        print(f"[Algorithm] {country} done")
+        print(f"done")
 
     print(f"[RUNTIME] Total runtime: {dt.datetime.now() - start_time} seconds")

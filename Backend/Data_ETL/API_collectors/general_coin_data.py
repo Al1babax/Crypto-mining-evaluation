@@ -47,9 +47,11 @@ def write_database(df, time1):
 
 
 def main(time1):
+    print("Collecting data from API")
     start_time = dt.datetime.now()
     df = api_coins()
     write_database(df, time1)
+    print("Data collected from API")
     print(f"Runtime: {dt.datetime.now() - start_time} seconds")
 
 
