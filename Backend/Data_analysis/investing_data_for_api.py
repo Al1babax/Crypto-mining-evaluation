@@ -63,7 +63,7 @@ def save_to_mongo(df, country):
 
 
 def main():
-    print("Started")
+    print("Updating api masterdata started...")
     start_time = dt.datetime.now()
     for col in client["Asic_machine_profit_full"].list_collection_names():
         df = get_data(col)
@@ -88,7 +88,7 @@ def main():
         save_to_mongo(df, col)
         print(f"{col} done")
 
-    print(f"Total runtime: {dt.datetime.now() - start_time}")
+    print(f"Updating api masterdata finished in {dt.datetime.now() - start_time}")
 
 
 if __name__ == '__main__':

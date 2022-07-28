@@ -1,5 +1,5 @@
 import subprocess
-import os
+import datetime as dt
 
 
 def main():
@@ -8,4 +8,12 @@ def main():
 
 
 if __name__ == "__main__":
+    start_time = dt.datetime.now()
+    print("-----------------------------------------------------")
+    print(f"Updating databases started at {start_time}")
+    print("-----------------------------------------------------")
     main()
+    end_time = dt.datetime.now()
+    print("----------------------------------------------------")
+    print(f"Total time for running all scripts {end_time - start_time}")
+    print("----------------------------------------------------")

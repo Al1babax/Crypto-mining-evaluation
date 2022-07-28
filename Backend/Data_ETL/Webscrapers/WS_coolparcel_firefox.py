@@ -17,6 +17,7 @@ from selenium.webdriver.common.keys import Keys
 import datetime as dt
 import time
 from fake_useragent import UserAgent
+import random
 
 
 # Settings
@@ -37,6 +38,15 @@ current_time = time1.strftime("%Y-%m-%dT%H_%M_%S")
 
 
 # In[187]:
+
+def random_sleep():
+    """
+    Random sleep function to avoid being blocked by coolparcel
+    :return:
+    """
+    # Make random sleep timer with floats
+    sleep_time = random.uniform(1.2, 2.5)
+    time.sleep(sleep_time)
 
 
 def element_by_id(id1:str):
@@ -61,18 +71,18 @@ def country_info_input(country:str, postalcode:str, from1 = False):
     postal_input = element_by_id("package-origin_postcode") if from1 else element_by_id("package-delivery_postcode")
 
     # Write country
-    time.sleep(2)
+    random_sleep()
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(country_input)).click()
     # country_input.click()
-    time.sleep(1)
+    random_sleep()
     country_input.send_keys(Keys.BACKSPACE)
-    time.sleep(1)
+    random_sleep()
     country_input.send_keys(country)
-    time.sleep(1)
+    random_sleep()
 
     # Write postalcode
     postal_input.click()
-    time.sleep(1)
+    random_sleep()
     for _ in range(2):
         postal_input.send_keys(Keys.ARROW_RIGHT)
         time.sleep(0.5)
@@ -167,6 +177,12 @@ def push_to_mongodb(data):  # TODO mongodb write
 
 
 def check_init_input(from1, to1, package_measures):
+    """
+    :param from1: Origin country
+    :param to1: Destination country
+    :param package_measures: Package measurements
+    :return:
+    """
     country_list = []
     us_states_list = []
     with open("resources/countries_list.txt") as r, open("resources/us_states.txt") as r2:
@@ -210,13 +226,15 @@ def get_zipcode(country):
     if country.lower() == "finland":
         return "00100"
     else:
-        print("Not Finland")
+        pass
+        # print("Not Finland")
 
     # if US state
     df = pd.read_json("resources/uszips.json")
     test_df = df[df["state_name"] == country]
     if str(test_df.shape) == "(0, 18)":
-        print("Not US state")
+        pass
+        # print("Not US state")
     else:
         zip_code = df[df["state_name"] == country]["zip"].iloc[3]
         if len(str(zip_code)) == 3:
@@ -246,6 +264,14 @@ def get_zipcode(country):
 
 
 def main(from1, to1, package_measures, from_zipcode, to_zipcode):
+    """
+    :param from1: Origin country
+    :param to1: Destination country
+    :param package_measures: Package measurements
+    :param from_zipcode: Origin zipcode
+    :param to_zipcode: Destination zipcode
+    :return:
+    """
     time.sleep(1)
     driver.get(start_url)
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(driver.find_element(By.ID, "package-input-origin")))
