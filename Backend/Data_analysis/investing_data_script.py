@@ -12,6 +12,7 @@ import pandas as pd
 import pymongo
 import datetime as dt
 import time
+import numpy as np
 
 client = pymongo.MongoClient()
 time1 = dt.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
@@ -38,8 +39,8 @@ def get_profit_dataframe(country):
 
 def get_dataframes():
     # Shipment dataframe
-    sort=list({'_id': -1}.items())
-    limit=1
+    sort = list({'_id': -1}.items())
+    limit = 1
     result = client['Shipments']['international_routes'].find(
         sort=sort,
         limit=limit
@@ -47,8 +48,8 @@ def get_dataframes():
     shipment_df = pd.DataFrame(result[0]["data"])
 
     # Machine and market info dataframes
-    sort=list({'_id': -1}.items())
-    limit=1
+    sort = list({'_id': -1}.items())
+    limit = 1
     result = client['Crypto-mining']['ASICS-PoW-final'].find(
         sort=sort,
         limit=limit
@@ -56,7 +57,7 @@ def get_dataframes():
     market_df = pd.DataFrame(result[0]["data"])
     market_df["machine_name"] = market_df["Manufacturer"] + "_" + market_df["Model"]
     machine_info_df = market_df
-    market_df = market_df[["machine_name",'available_stores']]
+    market_df = market_df[["machine_name", 'available_stores']]
 
     # returns all the dataframes
     return shipment_df, machine_info_df, market_df
@@ -95,8 +96,8 @@ def create_country_mapping(fin_market_df):  # TODO need to make better mapping a
         "ASIA": [inv_countries[2], inv_countries[3], inv_countries[8], inv_countries[4]]
     }"""
     country_mapping = {'EU': ['Italia', 'United Kingdom', 'Germany'],
-     'US': ['United States', 'Canada'],
-     'ASIA': ['Israel', 'Hong Kong', 'China', 'Honk Kong']}
+                       'US': ['United States', 'Canada'],
+                       'ASIA': ['Israel', 'Hong Kong', 'China', 'Honk Kong']}
     return country_mapping
 
 
@@ -134,7 +135,8 @@ def modify_machine_info_df(machine_info_df):
 # In[486]:
 
 
-def check_machine_category(machine_name, machine_info_df): # Checks what is category of size the machines is closest to calculate shipment cost
+def check_machine_category(machine_name,
+                           machine_info_df):  # Checks what is category of size the machines is closest to calculate shipment cost
     machine_df = machine_info_df[(machine_info_df["machine_name"] == machine_name)]
     custom_var_number = (machine_df["cube_inch"] * machine_df["lb"]).iloc[0]
     category_custom_var_numbers = [35002, 24307, 15556, 8750, 3889]
@@ -163,7 +165,7 @@ def check_machine_category(machine_name, machine_info_df): # Checks what is cate
 # In[487]:
 
 
-def choose_best_market(market_list:list, to_country):
+def choose_best_market(market_list: list, to_country):
     """
     Best machine market is chosen based on real price which includes shipping price --> There needs to be custom weights on markets lists with saying that item will be in stock within certain time --> Best way to calculate these weights would be to use coin profit prediction algorithms to determine how much profit will said machine lose each month and use that information to make weights --> but because I don't have that information yet I need to make my own custom weights. Let's say that machine is outdate in 3years to 0 profit and with average ROI of 1.5 years we can access how much they lose profit per one month. Let's also assume mining profit per month loss is linear -->
     Total profit: machine_price * 2
@@ -173,21 +175,21 @@ def choose_best_market(market_list:list, to_country):
     :return:
     """
     stock_name_dict = {'In stock',
-     'In stock(10 \\ndays\\n)',
-     'In stock(12 \\ndays\\n)',
-     'In stock(15 \\ndays\\n)',
-     'In stock(2 \\ndays\\n)',
-     'In stock(3 \\ndays\\n)',
-     'In stock(30 \\ndays\\n)',
-     'In stock(5 \\ndays\\n)',
-     'In stock(7 \\ndays\\n)',
-     'Out of stock',
-     'Pre-order(Aug\\xa02022)',
-     'Pre-order(Jul\\xa02022)',
-     'Pre-order(Jun\\xa02022)',
-     'Pre-order(May\\xa02022)',
-     'Pre-order(Oct\\xa02022)',
-     'Used'}
+                       'In stock(10 \\ndays\\n)',
+                       'In stock(12 \\ndays\\n)',
+                       'In stock(15 \\ndays\\n)',
+                       'In stock(2 \\ndays\\n)',
+                       'In stock(3 \\ndays\\n)',
+                       'In stock(30 \\ndays\\n)',
+                       'In stock(5 \\ndays\\n)',
+                       'In stock(7 \\ndays\\n)',
+                       'Out of stock',
+                       'Pre-order(Aug\\xa02022)',
+                       'Pre-order(Jul\\xa02022)',
+                       'Pre-order(Jun\\xa02022)',
+                       'Pre-order(May\\xa02022)',
+                       'Pre-order(Oct\\xa02022)',
+                       'Used'}
 
     # Adding import taxes here
     """
@@ -213,7 +215,7 @@ def choose_best_market(market_list:list, to_country):
                 market["tax_added_price"] = market["real_price"]
 
     # Sorting list
-    market_list.sort(key = lambda x: x["tax_added_price"])
+    market_list.sort(key=lambda x: x["tax_added_price"])
 
     for market in market_list:
         if market["stock"] != "Used" and market["stock"] != "Out of stock":
@@ -223,7 +225,7 @@ def choose_best_market(market_list:list, to_country):
 # In[488]:
 
 
-def format_price(price:str):
+def format_price(price: str):
     price = price[1:]
     price = price.replace(",", "").split(".")[0]
     return int(price)
@@ -232,7 +234,7 @@ def format_price(price:str):
 # In[489]:
 
 
-def calculate_shipment(data, shipment_df:pd.DataFrame, to_country):
+def calculate_shipment(data, shipment_df: pd.DataFrame, to_country):
     if data["isFreeShipping"] is True:
         return 0
     # print(to_country)
@@ -263,7 +265,7 @@ def include_shipping_taxes(country1, country_market_df, country_mapping, machine
             country = market["country"]
             temp_dict = {
                 "store_name": market["store_name"],
-                "non_ship_price": format_price(market["price"]),    # Formatting price
+                "non_ship_price": format_price(market["price"]),  # Formatting price
                 "country": country,
                 "stock": market["stock"],
                 "isFreeShipping": market["isFreeShipping"]
@@ -280,7 +282,7 @@ def include_shipping_taxes(country1, country_market_df, country_mapping, machine
                 temp_dict["continent"] = "ASIA"
 
             # print(temp_dict)
-            shipment_cost = calculate_shipment(temp_dict,shipment_df, country1)
+            shipment_cost = calculate_shipment(temp_dict, shipment_df, country1)
             temp_dict["shipment_cost"] = shipment_cost
             temp_dict["real_price"] = float(temp_dict["non_ship_price"]) + float(temp_dict["shipment_cost"])
             # print(temp_dict)
@@ -288,7 +290,8 @@ def include_shipping_taxes(country1, country_market_df, country_mapping, machine
             all_markets_list.append(temp_dict)
 
         cheapest_market = choose_best_market(all_markets_list, country1)
-        machine_market = {"machine_name": machine_name, "cheapest_market": cheapest_market, "cheapest_price": cheapest_market["tax_added_price"] if cheapest_market is not None else 0}
+        machine_market = {"machine_name": machine_name, "cheapest_market": cheapest_market,
+                          "cheapest_price": cheapest_market["tax_added_price"] if cheapest_market is not None else 0}
         country_modified_market.append(machine_market)
         # print(cheapest_market)
         # print()
@@ -302,9 +305,9 @@ def include_shipping_taxes(country1, country_market_df, country_mapping, machine
 def update_mongodb(df, country, machine_name):
     col = client["Asic_machine_profit_full"][country]
     df_dict = df.to_dict("records")
-    new_data = {"time": time1,"data": df_dict}
+    new_data = {"time": time1, "data": df_dict}
     if col.find({"machine_name": machine_name}) is None:
-        col.insert_one({"time": time1, "machine_name":machine_name, "data": df_dict})
+        col.insert_one({"time": time1, "machine_name": machine_name, "data": df_dict})
     else:
         col.update_one({"machine_name": machine_name}, {"$set": new_data})
 
@@ -338,15 +341,10 @@ def calculate_roi(fin_df, us_df):
         final_df["profit_after_ROI"] = final_df["total_profit"] - final_df["cheapest_price"]
         final_df["profit_after_ROI"] = final_df["profit_after_ROI"].apply(lambda x: 0 if x < 0 else x)
 
+        # only do the following lines if final_df "cheapest_price" is not 0
 
-        # Make new column to final_df called "investment_profit(%)" by dividing profit_after_ROI by cheapest_price * 100 and if cheapest is 0, then set it to 0
         final_df["investment_profit"] = (final_df["profit_after_ROI"] / final_df["cheapest_price"] * 100).round(2)
-
-        # Make new column to final_df called yearly_profit by dividing investment_profit by 2 and if investment_profit is 0, then set it to 0
         final_df["yearly_profit"] = (final_df["investment_profit"] / 2).round(2)
-
-        # convert all values in final_df to strings
-        final_df = final_df.applymap(str)
 
         # list of unique machine_name in final_df
         machine_names = list(final_df["machine_name"].unique())
@@ -370,6 +368,7 @@ def time_taken(func):
         print("Ended at: ", dt.datetime.now())
         print("----------------------------------------------")
         print("Time taken by {} is {} seconds".format(func.__name__, round((end - start), 2)))
+
     return wrapper
 
 
@@ -388,8 +387,10 @@ def main():
     machine_info_df = modify_machine_info_df(machine_info_df)
 
     # Market dataframes with shipments and taxes included
-    fin_modified_market_df = include_shipping_taxes("Finland", fin_market_df, country_mapping, machine_info_df, shipment_df)
-    us_modified_market_df = include_shipping_taxes("New York", us_market_df, country_mapping, machine_info_df, shipment_df)
+    fin_modified_market_df = include_shipping_taxes("Finland", fin_market_df, country_mapping, machine_info_df,
+                                                    shipment_df)
+    us_modified_market_df = include_shipping_taxes("New York", us_market_df, country_mapping, machine_info_df,
+                                                   shipment_df)
 
     # Calculate ROI
     calculate_roi(fin_modified_market_df, us_modified_market_df)

@@ -9,6 +9,7 @@ import Webscrapers.WS_ASICsmachines as asics
 import Webscrapers.WS_electricity as ele
 import API_collectors.general_coin_data as coin
 import datetime as dt
+import subprocess
 
 # If the first script fails this time will be used
 time2 = dt.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
@@ -31,6 +32,11 @@ def run_data_gathering():
     except:
         message = "Something went wrong with general_coin_data script"
     print("------------------------------------------------------")
+    try:
+        subprocess.call(["python", "Data_ETL/Webscrapers/create_shipment_database.py", time], shell=True)
+    except:
+        message = "Something went wrong with create_shipment_database script"
+    print("------------------------------------------------------")
 
 
 def main():
@@ -38,12 +44,10 @@ def main():
     # with same time
     run_data_gathering()
 
-    # Data processing
-    pass
     # Automated tests
     # TODO automatic testing that scrapers are writing right data to database
     # TODO some kind of automatic logging that could be sent with email alert of something failing
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

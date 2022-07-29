@@ -46,8 +46,8 @@ async def get_coins():
 
 
 async def main(country=None, coin=None, pool=None, algorithm=None,
-               machine_name=None):
-    if country in client["Asic_machine_profit"].list_collection_names():
+         machine_name=None):
+    if country in client["Asic_machine_profit_full"].list_collection_names():
         col = client["API_data"]["invest_profit"]
         doc = col.find_one({"country/state": country})
         all_data_df = pd.DataFrame(doc["data"])
@@ -68,6 +68,7 @@ async def main(country=None, coin=None, pool=None, algorithm=None,
             all_data_df = all_data_df[all_data_df["machine_name"] == machine_name]
 
         return make_json(all_data_df.T)
+
 
 # Only for testing
 # print(main("Finland"))

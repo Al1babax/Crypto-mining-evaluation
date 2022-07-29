@@ -63,16 +63,16 @@ def save_to_mongo(df, country):
 
 
 def main():
-    print("Started")
+    print("Updating api masterdata started...")
     start_time = dt.datetime.now()
     for col in client["Asic_machine_profit_full"].list_collection_names():
         df = get_data(col)
 
-        df["final_profit_hourly"] = df["final_profit_hourly"].apply(lambda x: float(x.replace(",", ".")))
-        df["final_profit_daily"] = df["final_profit_daily"].apply(lambda x: float(x.replace(",", ".")))
-        df["final_profit_monthly"] = df["final_profit_monthly"].apply(lambda x: float(x.replace(",", ".")))
-        df["total_profit"] = df["total_profit"].apply(lambda x: float(x.replace(",", ".")))
-        df["profit_after_ROI"] = df["profit_after_ROI"].apply(lambda x: float(x.replace(",", ".")))
+        df["final_profit_hourly"] = df["final_profit_hourly"].apply(lambda x: float(str(x).replace(",", ".")))
+        df["final_profit_daily"] = df["final_profit_daily"].apply(lambda x: float(str(x).replace(",", ".")))
+        df["final_profit_monthly"] = df["final_profit_monthly"].apply(lambda x: float(str(x).replace(",", ".")))
+        df["total_profit"] = df["total_profit"].apply(lambda x: float(str(x).replace(",", ".")))
+        df["profit_after_ROI"] = df["profit_after_ROI"].apply(lambda x: float(str(x).replace(",", ".")))
 
         df["final_profit_hourly"] = df["final_profit_hourly"].round(2)
         df["final_profit_daily"] = df["final_profit_daily"].round(2)
@@ -82,13 +82,23 @@ def main():
 
         df["ROI_days"] = df["ROI_days"].apply(lambda x: "never" if x == "0" else x)
 
+        df = df.applymap(str)
+        df.replace({"yearly_profit": {"nan": 0}}, inplace=True)
+        df.replace({"yearly_profit": {"inf": 0}}, inplace=True)
+        df.replace({"investment_profit": {"nan": 0}}, inplace=True)
+        df.replace({"investment_profit": {"inf": 0}}, inplace=True)
+        df[["yearly_profit", "investment_profit"]] = df[
+            ["yearly_profit", "investment_profit"]].astype(float)
+        df.sort_values(by=["yearly_profit"], ascending=False, inplace=True)
+        df = df.applymap(str)
+
         df = df.reset_index()
         df = df.drop(["index"], axis=1)
         df = df.applymap(str)
         save_to_mongo(df, col)
         print(f"{col} done")
 
-    print(f"Total runtime: {dt.datetime.now() - start_time}")
+    print(f"Updating api masterdata finished in {dt.datetime.now() - start_time}")
 
 
 if __name__ == '__main__':
