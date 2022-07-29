@@ -16,6 +16,8 @@ time1 = dt.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
 
 client = pymongo.MongoClient()
 mydb = client['Crypto-mining']
+
+
 # main function to scrape machines data
 
 
@@ -152,9 +154,8 @@ def get_market_prices(sc):
             dict_of_stores['stock'] = row.find(
                 'td', {'class': 'text-center', 'style': 'vertical-align: middle; font-size:1.1em;'}).text
             price_type = row.find('td', {'class': 'text-center hidden-xs hidden-sm',
-
+                                         'style': 'vertical-align: middle; font-size:1.1em;'}).text[:14]
             # print(price_type)
-
             if 'Free shipping' in price_type:
                 dict_of_stores['isFreeShipping'] = True
             else:
@@ -164,7 +165,7 @@ def get_market_prices(sc):
         return list_of_markets
 
 
-# get algorithmes of each machine
+# get algorithms of each machine
 def get_algorithm_of_one_machine(sc):
     source_code = sc
     list_of_algo = []
@@ -178,7 +179,7 @@ def get_algorithm_of_one_machine(sc):
             try:
                 machine_algos['Algorithm_name'] = row.find('b').text
                 list_of_usage = row.find('div').text.split(' ')
-                machine_algos['hashrate(H/hour) '] = convert_to_hash_per_hour(
+                machine_algos['hashrate(H/second) '] = convert_to_hash_per_hour(
                     extract_numbers(list_of_usage[0]), extract_unit_from_string(list_of_usage[0]))
                 machine_algos['power_consumption(W)'] = extract_numbers(
                     list_of_usage[1])
@@ -191,22 +192,22 @@ def get_algorithm_of_one_machine(sc):
 # convert to h/s
 def convert_to_hash_per_second(amount, unit):
     if unit == 'kh/s':
-        amount *= 1000
+        amount *= 1_000
     else:
         if unit == 'mh/s':
-            amount *= 1000000
+            amount *= 1_000_000
         else:
             if unit == 'gh/s':
-                amount *= 1000000000
+                amount *= 1_000_000_000
             else:
                 if unit == 'th/s':
-                    amount *= 1000000000000
+                    amount *= 1_000_000_000_000
                 else:
                     if unit == 'ph/s':
-                        amount *= 1000000000000000
+                        amount *= 1_000_000_000_000_000
                     else:
                         if unit == 'eh/s':
-                            amount *= 1000000000000000000
+                            amount *= 1_000_000_000_000_000_000
     return amount
 
 
@@ -263,6 +264,7 @@ def get_available_mining_pools_of_one_machine(sc):
             machine_available_pools.append(machine_available_pools_dict)
         return machine_available_pools
 
+
 # Migrate data to database
 
 
@@ -284,4 +286,5 @@ def extract_numbers_from_specs(label_name, val):
 
 
 # calling the main function
-main()
+if __name__ == '__main__':
+    main()
