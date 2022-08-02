@@ -306,7 +306,8 @@ def update_mongodb(df, country, machine_name):
     col = client["Asic_machine_profit_full"][country]
     df_dict = df.to_dict("records")
     new_data = {"time": time1, "data": df_dict}
-    if col.find({"machine_name": machine_name}) is None:
+    result = col.find({'machine_name': machine_name})
+    if len(list(result)) == 0:
         col.insert_one({"time": time1, "machine_name": machine_name, "data": df_dict})
     else:
         col.update_one({"machine_name": machine_name}, {"$set": new_data})
@@ -314,9 +315,17 @@ def update_mongodb(df, country, machine_name):
 
 # In[492]:
 
+def get_country_names() -> list:
+    with open("Data_analysis/resources/us_states.txt") as r:
+        data = r.readlines()
+        data = [line[:-1] for line in data]
+        data.append("Finland")
+        return data
+
 
 def calculate_roi(fin_df, us_df):
-    countries = client["Asic_machine_profit"].list_collection_names()
+    # countries = client["Asic_machine_profit"].list_collection_names()
+    countries = get_country_names()
 
     for country in countries:
         final_df = get_profit_dataframe(country)
@@ -326,6 +335,7 @@ def calculate_roi(fin_df, us_df):
         else:
             country_df = us_df
 
+        print(final_df)
         final_df = final_df.merge(country_df, how="left", on="machine_name")
         final_df["cheapest_market"] = final_df["cheapest_market"].fillna("Out of stock")
         final_df["cheapest_price"] = final_df["cheapest_price"].fillna(0)

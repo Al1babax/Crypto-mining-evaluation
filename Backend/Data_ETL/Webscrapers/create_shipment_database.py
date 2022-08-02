@@ -2,16 +2,28 @@ import pymongo
 import pandas as pd
 import WS_coolparcel_firefox as ws
 import datetime as dt
+import sys
+import logging
 
+logging.basicConfig(level=logging.INFO, filename="logs/etl.log", filemode="a+", format="%(asctime)s - %(levelname)s - %(message)s")
 client = pymongo.MongoClient()
 
 
 def get_data(time1):
-    db = client["Crypto-mining"]
+    """    db = client["Crypto-mining"]
     col = db["ASICS-PoW-final"]
 
     data = col.find_one({"time": time1})
     df = pd.DataFrame(data["data"])
+    """
+    # Shipment dataframe
+    sort = list({'_id': -1}.items())
+    limit = 1
+    result = client['Crypto-mining']['ASICS-PoW-final'].find(
+        sort=sort,
+        limit=limit
+    )
+    df = pd.DataFrame(result[0]["data"])
 
     x_list = []
     y_list = []
@@ -110,5 +122,9 @@ def main(time1):
 
 
 if __name__ == '__main__':
-    time2 = "2022-07-28T10_27_10"
-    main(time2)
+    try:
+        time1 = sys.argv[1]
+        main(time1)
+        logging.info("create_shipment_database run successfully")
+    except:
+        logging.exception("create_shipment_database script failed")

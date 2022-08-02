@@ -170,10 +170,9 @@ def main(country):
         # Checking if collection already exists for said machine --> if it does then update data and new time stamp
         # Else create new collection for new machine
         col = client["Asic_machine_profit"][country]
-        sort = list({'_id': -1}.items())
-        result = col.find(sort=sort, limit=1)
+        result = col.find({'machine_name': name})
 
-        if result is None:
+        if len(list(result)) == 0:
             col.insert_one({"time": time, "machine_name": name, "data": total_df.to_dict(orient="records")})
         else:
             new_data = {"$set": {"time": time, "data": total_df.to_dict(orient="records")}}

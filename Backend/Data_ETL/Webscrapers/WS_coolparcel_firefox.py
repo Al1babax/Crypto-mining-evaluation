@@ -13,24 +13,35 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from webdriver_manager.firefox import GeckoDriverManager
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.common.keys import Keys
 import datetime as dt
 import time
-from fake_useragent import UserAgent
+# from fake_useragent import UserAgent
 import random
 
+#User agent list
+ua_list = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0) Gecko/20100101 Firefox/98.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/E7FBAF",
+    "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36 Keeper/1616028983",
+]
 
 # Settings
 options = webdriver.FirefoxOptions()
 options.headless = True
-ua = UserAgent()
-userAgent = ua.chrome
-options.add_argument(f"user-agent={userAgent}")
+# ua = UserAgent()
+# userAgent = ua.random
+options.add_argument(f"user-agent={ua_list[random.randint(0, 6)]}")
 options.add_argument("--width=1920")
 options.add_argument("--height=1080")
 # options.add_argument('--no-sandbox')
 # options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Firefox(executable_path=GeckoDriverManager().install(), options=options)
+driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
 start_url = "https://coolparcel.com/shipping/international/shipping-calculator"
 wait = WebDriverWait(driver, 1)
 time1 = dt.datetime.now()

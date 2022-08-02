@@ -48,6 +48,11 @@ def fetch_machine(machine_name: str, request: Request, response: Response):
             response.status_code = status.HTTP_404_NOT_FOUND"""
 
 
+@app.get("/")
+async def default(response: Response):
+    time = await pds.get_database_update_time()
+    return time
+
 @app.get("/api/profit_data")
 async def profit_data(response: Response, country, coin=None, algorithm=None, machine_name=None):
     try:

@@ -45,6 +45,13 @@ async def get_coins():
     return result
 
 
+async def get_database_update_time():
+    col = client["API_data"]["invest_profit"]
+    doc = col.find_one({"country/state": "Finland"})
+    time = doc["time"]
+    return {"update_time": time}
+
+
 async def main(country=None, coin=None, pool=None, algorithm=None,
          machine_name=None):
     if country in client["Asic_machine_profit_full"].list_collection_names():
@@ -73,3 +80,4 @@ async def main(country=None, coin=None, pool=None, algorithm=None,
 # Only for testing
 # print(main("Finland"))
 # print(get_machine_names())
+print(get_database_update_time())
